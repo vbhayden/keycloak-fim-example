@@ -15,6 +15,16 @@ services:
       - ./nginx/letsencrypt:/usr/share/nginx/html
 
 
+  example-service:
+    restart: always
+    build: 
+      context: example-service
+    ports:
+      - "3000:3000"
+    container_name: docker_service
+    network_mode: host
+
+
   keycloak:
     restart: always
     build: 
@@ -25,7 +35,8 @@ services:
         KEYCLOAK_USERNAME: root
         KEYCLOAK_PASSWORD: Pa55word12345
     ports:
-      - 8080:8080
+      - "8081:8080"
+      - "9991:9990"
     links:
       - postgres:docker_postgres
     container_name: docker_keycloak
@@ -50,7 +61,6 @@ services:
     ports:
       - "2424:2424"
       - "2480:2480"
-    container_name: docker_postgres
     environment:
       ORIENTDB_ROOT_PASSWORD: "root"
     volumes:

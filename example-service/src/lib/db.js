@@ -5,7 +5,7 @@ const CLASS_ALIAS_NAME = "User";
 const CLASS_REALM_NAME = "Realm";
 
 const server = orientjs({
-    host: (process.env.ORIENT_HOST || "192.168.30.162"),
+    host: (process.env.ORIENT_HOST || "localhost"),
     port: (process.env.ORIENT_PORT || "2424"),
     username: (process.env.ORIENT_USER || "root"),
     password: (process.env.ORIENT_PASS || "root"),

@@ -8,13 +8,13 @@ const session = require('express-session');
 const bodyParser = require("body-parser");
 const Keycloak = require('keycloak-connect');
 
-const orientjs = require("./lib/db");
+const dbWrapper = require("./lib/db");
 
 // Read our Keycloak config file
 const keycloakConfig = JSON.parse(fs.readFileSync("./keycloak.json"));
 
 // Adjust for our docker env variable
-keycloakConfig["auth-server-url"] = "http://192.168.30.162:8081/auth"
+keycloakConfig["auth-server-url"] = "http://localhost:8081/auth"
 
 // Constants
 const PORT = (process.env.port || 3000);
@@ -62,7 +62,7 @@ app.use(function(req, res, next) {
     // roles required to access parts of the site.
     //
     function confirmRoles(token, request) {
-
+    	
         // At the time of this callback, we'll already have a token from
         // the Keycloak user.  The role confirmation will just be here
         // to append that role verification to the response variable.
@@ -80,27 +80,28 @@ app.use(function(req, res, next) {
     protect(req, res, next);
 })
 
-// // Redirecting someone to logout once their state gets weird
-// keycloak.accessDenied = function(req, res, next) {
-//     res.redirect("/logout")
-// }
+// Redirecting someone to logout once their state gets weird
+keycloak.accessDenied = function(req, res, next) {
+    res.redirect("/logout")
+}
 
-// // Get our user information
-// app.use(function(req, res, next){
-    
-//     // This isn't really documented, but we can use the access token to get our user info
-//     if (req.kauth && req.kauth.grant && req.kauth.grant.access_token) {
-//         let content = req.kauth.grant.access_token.content;
+// Get our user information
+app.use(function(req, res, next){
 
-//         res.locals.id = content.sub;
-//         res.locals.username = content.preferred_username;
+    // This isn't really documented, but we can use the access token to get our user info
+    if (req.kauth && req.kauth.grant && req.kauth.grant.access_token) {
 
-//         console.log(req.kauth.grant.access_token.content)
-//     }
-//     next();
-// });
+        
+        let content = req.kauth.grant.access_token.content;
 
-app.get("/aka", function(res, req, next){
+        res.locals.id = content.sub;
+        res.locals.username = content.preferred_username;
+     }
+     next(); 
+});
+
+app.get("/aka", function(req, res, next){
+
     res.render("index", {
         admin: res.locals.admin,
         id: res.locals.id,
@@ -110,10 +111,12 @@ app.get("/aka", function(res, req, next){
 
 app.get("/aka/:realm/:id", function(req, res, next){
     
-    res.render("index", {
-        admin: res.locals.admin,
-        id: res.locals.id,
-        user: res.locals.username
+    dbWrapper.getMasterAlias(req.params.id, req.params.realm, function(masterId) { 
+		res.render("index", {
+		    admin: res.locals.admin,
+		    id: masterId,
+		    user: res.locals.username
+		});
     });
 });
 app.get("*", function(req, res, next){
