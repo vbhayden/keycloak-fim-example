@@ -18,8 +18,8 @@ This project will create Docker containers for the following services:
 As this project is centered around Docker, there's very little setup required on the host machine. 
 
 ### TL;DR
-1. `git clone https://github.com/vbhayden/keycloak-federation-examples`
-1. `cd keycloak-federation-examples`
+1. `git clone https://github.com/vbhayden/keycloak-fim-example`
+1. `cd keycloak-fim-example`
 1. `sudo ./install-reqs.sh`
 1. `sudo ./rebuild.sh`
 
