@@ -29,6 +29,7 @@ services:
       ORIENT_PORT: "$ORIENT_PORT"
       SERVICE_PORT: "$SERVICE_PORT"
       KEYCLOAK_HOST: "$KEYCLOAK_HOST"
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
     networks:
       - public-network
 
