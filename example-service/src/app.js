@@ -14,10 +14,10 @@ const dbWrapper = require("./lib/db");
 const keycloakConfig = JSON.parse(fs.readFileSync("./keycloak.json"));
 
 // Adjust for our docker env variable
-keycloakConfig["auth-server-url"] = "http://localhost:8081/auth"
+keycloakConfig["auth-server-url"] = `http://${process.env.KEYCLOAK_HOST}/auth`
 
 // Constants
-const PORT = (process.env.port || 3000);
+const PORT = (process.env.SERVICE_PORT || 3000);
 
 // Create an instance of the express class and declare our port
 const app = express();
@@ -49,6 +49,8 @@ app.use(cors())
 // might get sort of confusing when looking directly at the href paths
 app.use(express.static("public"));
 app.use(express.static("views"));
+app.use("/aka", express.static("public"));
+app.use("/aka", express.static("views"));
 
 // Set our renderer and configurations
 app.set('view engine', 'ejs');
