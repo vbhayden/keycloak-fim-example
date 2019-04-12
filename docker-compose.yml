@@ -1,0 +1,60 @@
+version: '3'
+services:
+  
+  nginx:
+    restart: always
+    build:
+      context: nginx
+      args:
+        HOSTNAME: localhost
+    ports:
+      - 80:80
+      - 443:443
+    container_name: docker_nginx
+    volumes:
+      - ./nginx/letsencrypt:/usr/share/nginx/html
+
+
+  keycloak:
+    restart: always
+    build: 
+      context: keycloak
+      args:
+        WILDFLY_USERNAME: root
+        WILDFLY_PASSWORD: Pa55word12345
+        KEYCLOAK_USERNAME: root
+        KEYCLOAK_PASSWORD: Pa55word12345
+    ports:
+      - 8080:8080
+    links:
+      - postgres:docker_postgres
+    container_name: docker_keycloak
+
+
+  postgres:
+    restart: always
+    build: 
+      context: postgres
+    ports:
+      - "127.0.0.1:5432:5432"
+    container_name: docker_postgres
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+
+  orient-db:
+    restart: always
+    build: 
+      context: orient-db
+    container_name: docker_orient
+    network_mode: "host"
+    ports:
+      - "2424:2424"
+      - "2480:2480"
+    container_name: docker_postgres
+    environment:
+      ORIENTDB_ROOT_PASSWORD: "root"
+    volumes:
+      - ./orient-db/data/backup:/orientdb/backup
+      #- ./orient-db/data/config:/orientdb/config
+      - ./orient-db/data/databases:/orientdb/databases
+
