@@ -1,6 +1,6 @@
 {
     "realm": "example-realm",
-    "auth-server-url": "http://192.168.30.162:8081/auth",
+    "auth-server-url": "https://192.168.30.162:8081/auth",
     "ssl-required": "none",
     "resource": "example-client",
 

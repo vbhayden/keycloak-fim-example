@@ -5,7 +5,7 @@ const CLASS_ALIAS_NAME = "User";
 const CLASS_REALM_NAME = "Realm";
 
 const server = orientjs({
-    host: (process.env.ORIENT_HOST || "localhost"),
+    host: (process.env.ORIENT_HOST || "192.168.30.231"),
     port: (process.env.ORIENT_PORT || "2424"),
     username: (process.env.ORIENT_USER || "root"),
     password: (process.env.ORIENT_PASS || "root"),
@@ -81,7 +81,7 @@ module.exports = {
      * @param {realmReturnCallback} cb 
      */
     getRealms: function(cb) {
-        db.query()
+        
     },
 
     /**
