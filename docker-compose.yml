@@ -6,13 +6,15 @@ services:
     build:
       context: nginx
       args:
-        HOSTNAME: localhost
+        HOSTNAME: "$NGINX_HOST"
     ports:
       - 80:80
       - 443:443
     container_name: docker_nginx
     volumes:
       - ./nginx/letsencrypt:/usr/share/nginx/html
+    networks:
+      - public-network
 
 
   example-service:
@@ -22,7 +24,14 @@ services:
     ports:
       - "3000:3000"
     container_name: docker_service
-    network_mode: host
+    environment:
+      ORIENT_HOST: "$ORIENT_HOST"
+      ORIENT_PORT: "$ORIENT_PORT"
+      SERVICE_PORT: "$SERVICE_PORT"
+      KEYCLOAK_HOST: "$KEYCLOAK_HOST"
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
+    networks:
+      - public-network
 
 
   keycloak:
@@ -40,6 +49,10 @@ services:
     links:
       - postgres:docker_postgres
     container_name: docker_keycloak
+    environment:
+      PROXY_ADDRESS_FORWARDING: "true"
+    networks:
+      - public-network
 
 
   postgres:
@@ -51,13 +64,14 @@ services:
     container_name: docker_postgres
     volumes:
       - ./postgres/data:/var/lib/postgresql/data
+    networks:
+      - public-network
 
   orient-db:
     restart: always
     build: 
       context: orient-db
     container_name: docker_orient
-    network_mode: "host"
     ports:
       - "2424:2424"
       - "2480:2480"
@@ -67,4 +81,9 @@ services:
       - ./orient-db/data/backup:/orientdb/backup
       #- ./orient-db/data/config:/orientdb/config
       - ./orient-db/data/databases:/orientdb/databases
+    networks:
+      - public-network
 
+networks:
+  public-network:
+    driver: bridge
