@@ -11,14 +11,14 @@ const server = orientjs({
     password: (process.env.ORIENT_PASS || "root"),
 });
 
-/** @type {orientjs.ODatabase} */
+/** @type {orientjs.Db} */
 var db = undefined;
 
 function initDatabase(dbs) {
-   for (let db_ of dbs) {
-        if (db_.name == DB_NAME) {
-            console.log("[Orient] Found Existing Orient Database:", db_.name)
-            initClasses(db = db_);
+   for (let found of dbs) {
+        if (found.name == DB_NAME) {
+            console.log("[Orient] Found Existing Orient Database:", found.name)
+            initClasses(db = found);
             return;
         }
     }
@@ -29,7 +29,7 @@ function initDatabase(dbs) {
             storage: 'plocal'
         }).then(created => {
             console.log("[Orient] Created New Orient Database:", created.name)
-            initClasses(created);
+            initClasses(db = created);
         })
     }
 }
@@ -81,7 +81,7 @@ module.exports = {
      * @param {realmReturnCallback} cb 
      */
     getRealms: function(cb) {
-        
+
     },
 
     /**
