@@ -12,9 +12,10 @@ const dbWrapper = require("./lib/db");
 
 // Read our Keycloak config file
 const keycloakConfig = JSON.parse(fs.readFileSync("./keycloak.json"));
+const keycloakHost = (process.env.KEYCLOAK_HOST || "192.168.30.231")
 
 // Adjust for our docker env variable
-keycloakConfig["auth-server-url"] = `https://${process.env.KEYCLOAK_HOST}/auth`
+keycloakConfig["auth-server-url"] = `https://${keycloakHost}/auth`
 
 // Constants
 const PORT = (process.env.SERVICE_PORT || 3000);
