@@ -6,7 +6,7 @@ services:
     build:
       context: nginx
       args:
-        HOSTNAME: "$NGINX_HOST"
+        HOSTNAME: "${NGINX_HOST}"
     ports:
       - 80:80
       - 443:443
@@ -25,10 +25,10 @@ services:
       - "3000:3000"
     container_name: docker_service
     environment:
-      ORIENT_HOST: "$ORIENT_HOST"
-      ORIENT_PORT: "$ORIENT_PORT"
-      SERVICE_PORT: "$SERVICE_PORT"
-      KEYCLOAK_HOST: "$KEYCLOAK_HOST"
+      ORIENT_HOST: "${ORIENT_HOST}"
+      ORIENT_PORT: "${ORIENT_PORT}"
+      SERVICE_PORT: "${SERVICE_PORT}"
+      KEYCLOAK_HOST: "${KEYCLOAK_HOST}"
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
     networks:
       - public-network
