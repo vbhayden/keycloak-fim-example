@@ -1,8 +1,12 @@
 const orientjs = require("orientjs");
 
 const DB_NAME = "FIM";
-const CLASS_ALIAS_NAME = "User";
-const CLASS_REALM_NAME = "Realm";
+const CLASS_USER = "User";
+const CLASS_REALM = "Realm";
+
+const CLASS_ALIAS_FOR = "AliasFor";
+const CLASS_BELONGS_TO = "BelongsTo";
+const CLASS_FEDERATES = "Federates";
 
 const server = orientjs({
     host: (process.env.ORIENT_HOST || "192.168.30.231"),
@@ -14,63 +18,69 @@ const server = orientjs({
 /** @type {orientjs.Db} */
 var db = undefined;
 
-function initDatabase(dbs) {
-   for (let found of dbs) {
-        if (found.name == DB_NAME) {
-            console.log("[Orient] Found Existing Orient Database:", found.name)
-            initClasses(db = found);
-            return;
+// Make sure we have the right DB schema in place
+server.list()
+    // Make sure we have our FIM database
+    .then(dbs => {
+        for (let found of dbs) {
+            if (found.name == DB_NAME) {
+                return found;
+            }
         }
-    }
-    if (db == undefined) {
-        server.create({
-            name: DB_NAME,
-            type: 'graph',
-            storage: 'plocal'
-        }).then(created => {
-            console.log("[Orient] Created New Orient Database:", created.name)
-            initClasses(db = created);
-        })
-    }
-}
-
-/**
- * 
- * @param {orientjs.ODatabase} database 
- */
-function initClasses(database) {
-    database.class.list().then(classes => {
-        ensureClass(classes, CLASS_ALIAS_NAME, [
-            { name: "id", type: "String"},
-            { name: "name", type: "String"},
-        ]);
-        ensureClass(classes, CLASS_REALM_NAME, [
-            { name: "id", type: "String"},
-            { name: "name", type: "String"},
-        ]);
+        if (db == undefined) {
+            return server.create({
+                name: DB_NAME,
+                type: 'graph',
+                storage: 'plocal'
+            })
+        }
     })
-}
+    // Make sure we have our classes
+    .then(database => {
+        db = database
+        return Promise.all([
+            database.class.create(CLASS_USER, "V", null, false, true),
+            database.class.create(CLASS_REALM, "V", null, false, true),
+            database.class.create(CLASS_ALIAS_FOR, "E", null, false, true),
+            database.class.create(CLASS_BELONGS_TO, "E", null, false, true),
+            database.class.create(CLASS_FEDERATES, "E", null, false, true)
+        ])
+    })
+    // Make sure those classes have the right properties
+    .then(verifiedClasses => {
+        console.log("[Orient] Verified Classes ...");
 
-function ensureClass(classes, name, props) {
-    for (let c of classes) {
-        if (c.name == name) {
-            console.log("[Orient] Found Existing Class:", name)
-            return;
-        }
-    }
-    db.class.create(name, "V").then(c => {
-        console.log("[Orient] Created New Class:", c.name);
-        c.property.create(props).then(p => {
-            console.log(`[Orient] Created Properties for ${c.name}:`, p);
-        });
+        let [users, realms, a, b, c] = verifiedClasses
+        let props = [{
+                name: "id",
+                type: "String",
+                ifnotexist: true,
+            },
+            {
+                name: "name",
+                type: "String",
+                ifnotexist: true,
+            }
+        ]
+
+        return Promise.all([
+            users.property.create(props),
+            realms.property.create(props)
+        ])
+    })
+    .then(verifiedProps => {
+        console.log(`[Orient] Verified Class Properties.  DB connection is all set.`);
     });
-}
-
-// Get our DB from Orient
-server.list().then(initDatabase);
 
 module.exports = {
-    
+
+    /**
+     * Returns the current Database object connected to our OrientDB instance.
+     */
+    db: () => {
+        return db;
+    },
+
     /**
      * Callback returning a list of all realms available to the FIM DB.
      *
@@ -80,7 +90,7 @@ module.exports = {
      * Retrieves every known alias for the given user ID / realm pair.
      * @param {realmReturnCallback} cb 
      */
-    getRealms: function(cb) {
+    getRealms: function (cb) {
 
     },
 
@@ -96,8 +106,8 @@ module.exports = {
      * @param {string} realm 
      * @param {idReturnCallback} callback 
      */
-    getMasterAlias: function(id, realm, callback) {
-        
+    getMasterAlias: function (id, realm, callback) {
+
         let query = `
             select id from (
                 select expand(out("AliasFor")) from (
@@ -124,4 +134,85 @@ module.exports = {
             }
         });
     },
+
+    /**
+     * Callback returning a master ID.
+     *
+     * @callback dummyDataCallback
+     */
+    /**
+     * Retrieves the master alias for the given user ID / realm pair.
+     * @param {Number} users
+     * @param {dummyDataCallback} callback 
+     */
+    insertDummyData: function(users, callback) {
+        
+        let rid = (entry) => {
+            let record = entry["@rid"]
+            return `${record.cluster}:${record.position}`
+        }
+
+        let vertexPromise = (className, instanceName) => {
+            return db.insert().into(className).set({
+                id: db.rawExpression("format('%s',uuid())"),
+                name: instanceName
+            }).one()
+        }
+        let edgePromise = (className, from, to) => {
+            return db.create("EDGE", className)
+            .from(rid(from))
+            .to(rid(to))
+            .one()
+        }
+
+        // Create our example realms
+        return Promise.all([
+            vertexPromise(CLASS_REALM, "A"),
+            vertexPromise(CLASS_REALM, "B"),
+            vertexPromise(CLASS_REALM, "MASTER"),
+        ])
+
+        // Create users on these realms
+        .then(realms => {
+            let [ra, rb, rm] = realms;
+
+            return Promise.all([
+                edgePromise(CLASS_FEDERATES, rm, ra),
+                edgePromise(CLASS_FEDERATES, rm, rb),
+                realms
+            ])
+        })
+        .then(data => {
+            let [_, __, realms] = data
+            let [ra, rb, rm] = realms;
+            let promises = []
+
+            for (let k=1; k<users+1; k++) {
+                
+                // Create the user's various aliases
+                promises[k-1] = Promise.all([
+                    vertexPromise(CLASS_USER, `RA-User-${k}`),
+                    vertexPromise(CLASS_USER, `RB-User-${k}`),
+                    vertexPromise(CLASS_USER, `MASTER-User-${k}`),
+                ])
+                // Map those edges to their realms and the user's master alias
+                .then(users => {
+                    let [ua, ub, um] = users;
+                    return Promise.all([
+                        edgePromise(CLASS_BELONGS_TO, ua, ra),
+                        edgePromise(CLASS_BELONGS_TO, ub, rb),
+                        edgePromise(CLASS_BELONGS_TO, um, rm),
+
+                        edgePromise(CLASS_ALIAS_FOR, ua, um),
+                        edgePromise(CLASS_ALIAS_FOR, ub, um),
+                    ])
+                })
+            }
+
+            return Promise.all(promises);
+        })
+        .then(insertions => {
+            console.log(`[Orient] Inserted ${insertions.length} records of dummy data.`)
+        })
+    }
 }
