@@ -1,4 +1,4 @@
-Keycloak Federation Examples
+Keycloak-based Federated ID Resolution
 --------------
 This project is a Dockerized service architecture to protect an federated identity resolution service.
 
