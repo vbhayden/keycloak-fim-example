@@ -61,50 +61,12 @@ app.use(bodyParser.urlencoded({
     extended: false
 }));
 
-app.use(function (req, res, next) {
-
-    // Use a callback to check whether our user's token has the given
-    // roles required to access parts of the site.
-    //
-    function confirmRoles(token, request) {
-
-        // At the time of this callback, we'll already have a token from
-        // the Keycloak user.  The role confirmation will just be here
-        // to append that role verification to the response variable.
-        //
-        res.locals.admin = token.hasRole("realm:admin");
-
-        // False here will force a hideous redirect to the Keycloak "permission denied"
-        // page, so we'll want to handle that more gracefully.
-        return true;
-    }
-
-    // Unpack the middleware
-    let protect = keycloak.protect(confirmRoles);
-
-    protect(req, res, next);
-})
-
-// Get our user information
-app.use(function (req, res, next) {
-
-    // This isn't really documented, but we can use the access token to get our user info
-    if (req.kauth && req.kauth.grant && req.kauth.grant.access_token) {
-
-        let content = req.kauth.grant.access_token.content;
-
-        res.locals.id = content.sub;
-        res.locals.username = content.preferred_username;
-    }
-    next();
+app.get("/aka", function (req, res, next) {
+    res.render("index");
 });
 
-app.get("/aka", function (req, res, next) {
-    res.render("index", {
-        admin: res.locals.admin,
-        id: res.locals.id,
-        user: res.locals.username
-    });
+app.get("/aka/api", function (req, res, next) {
+    res.render("api");
 });
 
 app.get("/aka/api/realms", function(req, res, next) {

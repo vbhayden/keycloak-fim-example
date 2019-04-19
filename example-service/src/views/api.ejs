@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+
+<!-- Page Title -->
+<title>Example FIM Mapping Service</title>
+
+<!-- Header -->
+<% include partials/header.html %>
+
+<body class="text-center">
+
+    <div class="container d-flex w-100 h-100 p-3 mx-auto flex-column">
+        <header class="masthead mb-auto">
+            <div class="inner">
+            </div>
+        </header>
+
+        <main role="main" class="">
+            <p class="lead">
+                If you're seeing this, then the ID Resolution API service appears to be up.  
+                <br><br>
+                For this example implementation, an OrientDB instance stores graphed relations between users and realms.  
+                This service exposes a basic API with endpoints for querying that database.  As this service is (should be)
+                protected by Keycloak or something else implementing an auth protocol, you will probably need to do some
+                protocol transactions to gain access with cross-domain requests.
+                <br><br> 
+                <a class="btn btn-secondary" href="/aka"><b>Click here to return to the demo page</b></a> 
+                <br><br>
+            </p>
+            <br>
+            <br>
+            <table class="table" style="text-align: left">
+                <tr>
+                    <th><b>Endpoint</b></td>
+                    <th>Description.</td>
+                </tr>
+                <tr>
+                    <th><samp>/aka/api/realms</samp></td>
+                    <td>Returns a JSON array of all realms, including the master.</td>
+                </tr>
+                <tr>
+                    <th><samp>/aka/api/users</samp></td>
+                    <td>Returns a JSON array of all users.</td>
+                </tr>
+                <tr>
+                    <th><samp>/aka/api/users?realm={realm-id}</samp></td>
+                    <td>
+                        Returns a JSON array of all users on a given Realm.
+                    </td>
+                </tr>
+                <tr>
+                    <th><samp>/aka/api/map?user={user-id}&realm={realm-id}</samp></td>
+                    <td>
+                        Returns the Master user associated with a given account on a given realm.
+                    </td>
+                </tr>
+            </table>
+        </main>
+
+        <footer class="mastfoot mt-auto">
+
+        </footer>
+    </div>
+
+</body>
+
+</html>
