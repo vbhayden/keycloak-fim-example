@@ -72,6 +72,27 @@ server.list()
         console.log(`[Orient] Verified Class Properties.  DB connection is all set.`);
     });
 
+function orientQuery(query) {
+    return db.query(query).then(results => {
+        return results.map(orientObj => {
+            return {
+                id: orientObj.id,
+                name: orientObj.name
+            }
+        })
+    });
+}
+
+function orientQueryFirst(query) {
+    return orientQuery(query)
+        .then(results => {
+            if (results.length > 0)
+                return results[0]
+            else
+                return null
+        })
+}
+
 module.exports = {
 
     /**
@@ -82,19 +103,6 @@ module.exports = {
     },
 
     /**
-     * Callback returning a list of all realms available to the FIM DB.
-     *
-     * @callback realmReturnCallback
-     */
-    /**
-     * Retrieves every known alias for the given user ID / realm pair.
-     * @param {realmReturnCallback} cb 
-     */
-    getRealms: function (cb) {
-
-    },
-
-    /**
      * Callback returning a master ID.
      *
      * @callback idReturnCallback
@@ -102,37 +110,44 @@ module.exports = {
      */
     /**
      * Retrieves the master alias for the given user ID / realm pair.
-     * @param {string} id 
-     * @param {string} realm 
-     * @param {idReturnCallback} callback 
+     * @param {string} id User's realm-specific ID.
+     * @param {string} realm Realm to query on.
+     * @return {Promise<string>} The user's master ID.
      */
-    getMasterAlias: function (id, realm, callback) {
+    getMasterAlias: function (user, realm) {
 
         let query = `
-            select id from (
+            select * from (
                 select expand(out("AliasFor")) from (
                     select expand(in("BelongsTo")) from Realm where id = "${db.escape(realm)}"
-                ) where id = "${db.escape(id)}"
+                ) where id = "${db.escape(user)}"
             )
         `
-        db.query(query).then(results => {
-            if (results.length == 0)
-                callback(null);
-            else if (results.length == 1)
-                callback(results[0].id);
-            else {
+        return orientQueryFirst(query);
+    },
 
-                // This is problematic, but won't be if these are all the same...
-                let id_ = results[0].id;
-                for (let result in results) {
-                    if (id_ != result.id) {
-                        console.warn("[Orient] IMPROPER TABLE CONFIGURATION, MULTIPLE IDs FOR SAME USER ON SAME REALM");
-                        break;
-                    }
-                }
-                callback(id_);
-            }
-        });
+    /**
+     * 
+     * @param {Realm} realm 
+     */
+    getUsersOnRealm: function(realm) {
+        let query = `select expand(in("BelongsTo")) from Realm where id = "${db.escape(realm)}"`
+        return orientQuery(query);
+    },
+
+    getUser: function(user) {
+        let query = `select * from User where id = "${db.escape(user)}"`
+        return orientQuery(query);
+    },
+
+    getUsers: function(user) {
+        let query = `select * from User`
+        return orientQuery(query);
+    },
+
+    getRealms: function() {
+        let query = `select * from Realm`
+        return orientQuery(query);
     },
 
     /**

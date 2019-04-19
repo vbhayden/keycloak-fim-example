@@ -91,7 +91,6 @@ app.use(function (req, res, next) {
     // This isn't really documented, but we can use the access token to get our user info
     if (req.kauth && req.kauth.grant && req.kauth.grant.access_token) {
 
-
         let content = req.kauth.grant.access_token.content;
 
         res.locals.id = content.sub;
@@ -101,7 +100,6 @@ app.use(function (req, res, next) {
 });
 
 app.get("/aka", function (req, res, next) {
-
     res.render("index", {
         admin: res.locals.admin,
         id: res.locals.id,
@@ -109,16 +107,38 @@ app.get("/aka", function (req, res, next) {
     });
 });
 
-app.get("/aka/:realm/:id", function (req, res, next) {
+app.get("/aka/api/realms", function(req, res, next) {
+    dbWrapper.getRealms()
+        .then(realms => {
+            res.json(realms)
+        })
+})
 
-    dbWrapper.getMasterAlias(req.params.id, req.params.realm, function (masterId) {
-        res.render("index", {
-            admin: res.locals.admin,
-            id: masterId,
-            user: res.locals.username
-        });
-    });
-});
+app.get("/aka/api/users", function(req, res, next) {
+    let realm = req.query.realm;
+    if (realm) {
+        dbWrapper.getUsersOnRealm(realm)
+            .then(users => {
+                res.json(users)
+            })
+    }
+    else {
+        dbWrapper.getUsers()
+            .then(users => {
+                res.json(users)
+            })
+    }
+})
+
+app.get("/aka/api/map", function(req, res, next) {
+    dbWrapper.getMasterAlias(req.query.user, req.query.realm)
+        .then(master => {
+            if (master == undefined)
+                res.status(400).send(`No master ID found for User ${req.query.user} on realm ${req.query.realm} `)
+            else
+                res.json(master)
+        })
+})
 
 // Start the service
 app.listen(PORT, function () {
