@@ -1,9 +1,6 @@
 <!doctype html>
 <html lang="en">
 
-<!-- Page Title -->
-<title>Example FIM Mapping Service</title>
-
 <!-- Header -->
 <% include partials/header.html %>
 
@@ -16,38 +13,50 @@
         </header>
 
         <main role="main" class="">
-            <p class="lead">
-                If you're seeing this, then the ID Resolution API service appears to be up.
-                <br><br>
-                The primary goal of this service is to resolve realm-specific UUIDs to a single master UUID.
-                <br><br>
-                <a class="btn btn-secondary" href="/aka/api"><b>Click here to view a more detailed description and view
-                        API details</b></a>
-            </p>
-            <br><br>
-
-            <div class="row">
-                <div class="col-md-4">
-                    <h4>Realms</h4>
-                    <div class="list-group" style="overflow-y: scroll; scroll-behavior: smooth; height: 300px">
-                        <a href="#" class="list-group-item list-group-item-dark">First item</a>
-                        <a href="#" class="list-group-item list-group-item-dark">Second item</a>
-                        <a href="#" class="list-group-item list-group-item-dark">Third item</a>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <h4>Users</h4>
-                    <div class="list-group" style="overflow-y: scroll; scroll-behavior: smooth; height: 300px">
-                        <a href="#" class="list-group-item list-group-item-dark">First item</a>
-                        <a href="#" class="list-group-item list-group-item-dark">Second item</a>
-                        <a href="#" class="list-group-item list-group-item-dark">Third item</a>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <h4>Master ID</h4>
-                    <p></p>
-                </div>
+            <table class="table table-dark">
+                <tbody>
+                    <tr>
+                        <td>
+                            <select id="selectRealm" class="js-example-basic-single" placeholder="Select a Realm"
+                                name="state" style="width: 100%">
+                                <!---->
+                            </select>
+                        </td>
+                        <td>
+                            <select id="selectUser" class="js-example-basic-single" placeholder="Select a User"
+                                style="width: 100%">
+                                <!---->
+                            </select>
+                        </td>
+                        <td><button id="btnQuery" class="btn btn-secondary btn-block">Query for Master</button></td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <button id="btnQueryUsers" query="/aka/api/users" class="btn btn-secondary queryable">Query All Users</button>
+                            <button id="btnQueryUsers" query="/aka/api/users?master=0" class="btn btn-secondary queryable">Query Realm Users</button>
+                            <button id="btnQueryUsers" query="/aka/api/users?master=1" class="btn btn-secondary queryable">Query Master Users</button>
+                            <button id="btnQueryRealms" query="/aka/api/realms" class="btn btn-secondary queryable">Query All Realms</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <hr>
+            <div style="background: #20292e; width: 100%; min-height: 50px; text-align: left; padding: 20px; font-size: 14px">
+                <samp id="queryLiteral">
+                    /aka/api/query?
+                </samp>
             </div>
+            <div style="background: #222222; width: 100%; min-height: 500px;  text-align: left; padding: 20px">
+                <samp id="queryOutput">
+
+                </samp>
+            </div>
+            <hr>
+            <p class="lead">
+                <a class="btn btn-secondary" href="/aka/api">
+                    <b>Click here to view a more detailed description and view API details</b>
+                </a>
+            </p>
         </main>
 
         <footer class="mastfoot mt-auto">
@@ -55,6 +64,92 @@
         </footer>
     </div>
 
+    <script> 
+        function apiQuery(url) {
+            $("#queryLiteral").text(url);
+            return fetch(url, {
+                credentials: "include"
+            })
+            .then(function(response) {
+                if (response.ok)
+                    return response.json();
+                else
+                    return response.text().then(text => {
+                        throw Error(text);
+                    });
+            })
+            .then(json => {
+                $("#queryOutput").empty();
+                $("#queryOutput").append(`<pre>${JSON.stringify(json, null, 4)}</pre>`)
+                return json;
+            })
+            .catch(statusText => {
+                $("#queryOutput").empty();
+                $("#queryOutput").append(statusText)
+            })
+        }
+        
+        function updateUrl() {
+            let user = $("#selectUser").val();
+            let realm = $("#selectRealm").val();
+            if (user && realm) {
+                $("#queryLiteral").text(`/aka/api/query?realm=${realm}&user=${user}`)
+            } else if (realm) {
+                $("#queryLiteral").text(`/aka/api/query?realm=${realm}`)
+            }
+
+            $('#btnQuery').attr("disabled", realm == undefined);
+        }
+
+        $(document).ready(function () {
+            $('.js-example-basic-single').each((k, elem) => {
+                $(elem).select2({
+                    theme: "dark-adminlte",
+                    placeholder: $(elem).attr("placeholder"),
+                });
+                $(elem).change(ev => {
+                    if ($(elem).attr("id") == "selectRealm") {
+                        $("#selectUser").val(null).trigger('change')
+                    }
+                    updateUrl();
+                });
+            })
+            $("#btnQuery").click(ev => {
+                apiQuery($("#queryLiteral").text())
+            })
+            updateUrl();
+        });
+    </script>
+    <script>
+
+        $(".queryable").each((k, elem) => {
+            $(elem).click(ev => {
+                apiQuery($(elem).attr("query"))
+            })
+        })
+
+        $("#selectRealm").change(ev => {
+            apiQuery(`/aka/api/query?realm=${$("#selectRealm").val()}`)
+            .then(users => {
+                if (Array.isArray(users))
+                    users.forEach(user => {
+                        if (!user.master)
+                            $("#selectUser").append(`<option value="${user.id}">${user.name}</option>`)
+                    })
+                    $("#selectUser").val(null).trigger('change');
+            });
+        });
+        
+        apiQuery("/aka/api/realms")
+            .then(realms => {
+                realms.forEach(realm => {
+                    if (!realm.master)
+                        $("#selectRealm").append(`<option value="${realm.id}">${realm.name}</option>`)
+                })
+            });
+    </script>
 </body>
+
+<% include partials/footer.html %>
 
 </html>

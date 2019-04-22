@@ -43,16 +43,20 @@
                     <td>Returns a JSON array of all users.</td>
                 </tr>
                 <tr>
-                    <th><samp>/aka/api/users?realm={realm-id}</samp></td>
-                    <td>
-                        Returns a JSON array of all users on a given Realm.
-                    </td>
+                    <th><samp>/aka/api/users?<span style="color: yellowgreen">master={0 or 1}</span></samp></td>
+                    <td>Returns a JSON array of all users, filtering for master nodes.</td>
                 </tr>
                 <tr>
-                    <th><samp>/aka/api/map?user={user-id}&realm={realm-id}</samp></td>
-                    <td>
-                        Returns the Master user associated with a given account on a given realm.
-                    </td>
+                    <th><samp>/aka/api/query?<span style="color: yellowgreen">realm={realm-id}</span></samp></td>
+                    <td>Returns a JSON array of all users on a given Realm.</td>
+                </tr>
+                <tr>
+                    <th><samp>/aka/api/query?<span style="color: yellowgreen">realm={realm-id}&user={user-id}</span></samp></td>
+                    <td>Returns the Master user associated with a given account on a given realm.</td>
+                </tr>
+                <tr>
+                        <th><samp>/aka/api/query?<span style="color: yellowgreen">realm={realm-id}&master={master-id}</span></samp></td>
+                    <td>Returns the Realm-specific user associated with a given master account.</td>
                 </tr>
             </table>
         </main>

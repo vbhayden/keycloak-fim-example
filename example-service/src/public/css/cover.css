@@ -19,10 +19,10 @@ a:hover {
 .btn-secondary,
 .btn-secondary:hover,
 .btn-secondary:focus {
-  color: #333;
+  color: #eee;
   text-shadow: none; /* Prevent inheritance from `body` */
-  background-color: #fff;
-  border: .05rem solid #fff;
+  background-color: #374850;
+  border: .05rem solid #374850;
 }
 
 
@@ -40,8 +40,8 @@ body {
   display: -ms-flexbox;
   display: flex;
   color: #fff;
-  text-shadow: 0 .05rem .1rem rgba(0, 0, 0, .5);
-  box-shadow: inset 0 0 5rem rgba(0, 0, 0, .5);
+  /* text-shadow: 0 .05rem .1rem rgba(0, 0, 0, .5);
+  box-shadow: inset 0 0 5rem rgba(0, 0, 0, .5); */
 }
 
 .cover-container {
@@ -109,4 +109,8 @@ body {
  */
 .mastfoot {
   color: rgba(255, 255, 255, .5);
+}
+
+pre {
+  color: #eee;
 }

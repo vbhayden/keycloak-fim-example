@@ -77,29 +77,62 @@ app.get("/aka/api/realms", function(req, res, next) {
 })
 
 app.get("/aka/api/users", function(req, res, next) {
-    let realm = req.query.realm;
-    if (realm) {
+
+    let master = req.query.master
+    if (master === undefined)
+        dbWrapper.getUsers(master)
+            .then(users => {
+                res.json(users)
+            })
+    else if (master == 1)
+        dbWrapper.getMasterUsers(master)
+            .then(users => {
+                res.json(users)
+            })
+    else 
+        dbWrapper.getNormalUsers(master)
+            .then(users => {
+                res.json(users)
+            })          
+})
+
+app.get("/aka/api/query", function(req, res, next) {
+
+    let user = req.query.user
+    let realm = req.query.realm
+    let master = req.query.master
+
+    if (user && master) {
+        res.status(400).send(`Cannot supply both {master} and {user} together, specify one with {realm}`)
+        return;
+    }
+
+    if (user && realm) {
+        dbWrapper.getMasterAlias(user, realm)
+            .then(masterAlias => {
+                if (masterAlias == undefined)
+                    res.status(400).send(`No master ID found for User ${user} on realm ${realm} `)
+                else
+                    res.json(masterAlias)
+            })
+    } else if (master && realm) {
+        dbWrapper.getRealmAlias(master, realm)
+            .then(realmAlias => {
+                if (realmAlias == undefined)
+                    res.status(400).send(`No realm ID found for User ${master} on realm ${realm} `)
+                else
+                    res.json(realmAlias)
+            })
+    } else if (realm) {
         dbWrapper.getUsersOnRealm(realm)
             .then(users => {
                 res.json(users)
             })
     }
     else {
-        dbWrapper.getUsers()
-            .then(users => {
-                res.json(users)
-            })
+        res.status(400).send(`Must specify {master} or {user} with a {realm}`)
+        return;
     }
-})
-
-app.get("/aka/api/map", function(req, res, next) {
-    dbWrapper.getMasterAlias(req.query.user, req.query.realm)
-        .then(master => {
-            if (master == undefined)
-                res.status(400).send(`No master ID found for User ${req.query.user} on realm ${req.query.realm} `)
-            else
-                res.json(master)
-        })
 })
 
 // Start the service
